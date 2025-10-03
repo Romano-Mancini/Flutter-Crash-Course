@@ -1,27 +1,28 @@
 import 'package:flutter_crash_course/models/user.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_crash_course/services/base_service.dart';
 
-class AuthService {
+class AuthService extends BaseService {
   Future<UserModel> getCurrentUser() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final String? token = prefs.getString('access_token');
+    final String? token = await tokenRepository.token;
     if (token != null) {
-      await Future.delayed(const Duration(milliseconds: 500));
-      return UserModel(
-        uid: 'user123',
-        email: 'user@example.com',
-        name: 'John Doe',
-      );
+      final response = await client.get('${baseUrl}api/profile');
+      if (response.statusCode == 200) {
+        return UserModel.fromJson(response.data);
+      } else {
+        throw AuthException('Failed to fetch user data');
+      }
     }
     throw AuthException('No user logged in');
   }
 
   Future<UserModel> login(String email, String password) async {
-    await Future.delayed(const Duration(milliseconds: 500));
-    if (email == 'demo@gmail.com' && password == 'password') {
-      // Here we'll save the token to simulate a logged-in user
-      final SharedPreferences prefs = await SharedPreferences.getInstance();
-      await prefs.setString('access_token', 'dummy_token');
+    final response = await client.post(
+      '${baseUrl}auth/login',
+      data: {'email': email, 'password': password},
+    );
+    if (response.statusCode == 200) {
+      await tokenRepository.setToken(response.data['access_token']);
+      await tokenRepository.setRefreshToken(response.data['refresh_token']);
       return await getCurrentUser();
     } else {
       throw AuthException('Invalid credentials');
@@ -29,17 +30,29 @@ class AuthService {
   }
 
   Future<UserModel> signUp(String email, String password, String name) async {
-    await Future.delayed(const Duration(milliseconds: 500));
-    return await login(email, password);
+    final response = await client.post(
+      '${baseUrl}auth/signup',
+      data: {'email': email, 'password': password, 'name': name},
+    );
+    if (response.statusCode == 201) {
+      return await login(email, password);
+    } else {
+      throw AuthException('Failed to sign up');
+    }
   }
 
   Future<void> requestPasswordReset(String email) async {
-    await Future.delayed(const Duration(milliseconds: 500));
+    final response = await client.post(
+      '${baseUrl}auth/forgot-password',
+      data: {'email': email},
+    );
+    if (response.statusCode != 200) {
+      throw AuthException('Failed to request password reset');
+    }
   }
 
   Future<void> logout() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.remove('access_token');
+    await tokenRepository.logout();
   }
 }
 
