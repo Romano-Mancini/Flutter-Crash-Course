@@ -1,16 +1,19 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_crash_course/components/button.dart';
+import 'package:flutter_crash_course/services/auth/auth_notifier.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 @RoutePage()
-class ForgotPasswordScreen extends StatefulWidget {
+class ForgotPasswordScreen extends ConsumerStatefulWidget {
   const ForgotPasswordScreen({super.key});
 
   @override
-  State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
+  ConsumerState<ForgotPasswordScreen> createState() =>
+      _ForgotPasswordScreenState();
 }
 
-class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
+class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailCtrl = TextEditingController();
   bool _loading = false;
@@ -23,34 +26,31 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     super.dispose();
   }
 
-  Future<bool> _mockReset(String email) async {
-    await Future.delayed(const Duration(seconds: 1));
-    return _emailRegExp.hasMatch(email);
-  }
-
   void _submit() async {
     final form = _formKey.currentState;
     if (form == null) return;
     if (!form.validate()) return;
 
     setState(() => _loading = true);
-    final success = await _mockReset(_emailCtrl.text.trim());
-    setState(() => _loading = false);
-
-    if (success) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Password reset email sent (mock)')),
-        );
-        context.router.pop();
-      }
-    } else {
+    try {
+      await ref
+          .read(authNotifierProvider.notifier)
+          .requestPasswordReset(_emailCtrl.text.trim());
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('Invalid email (mock)')));
+        ).showSnackBar(const SnackBar(content: Text('Reset email sent!')));
+        context.router.pop();
+      }
+    } catch (e) {
+      // Handle error
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to send reset email...')),
+        );
       }
     }
+    setState(() => _loading = false);
   }
 
   @override

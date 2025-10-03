@@ -1,17 +1,19 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_crash_course/components/button.dart';
+import 'package:flutter_crash_course/services/auth/auth_notifier.dart';
 import 'package:flutter_crash_course/services/router/router.gr.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 @RoutePage()
-class SignupScreen extends StatefulWidget {
+class SignupScreen extends ConsumerStatefulWidget {
   const SignupScreen({super.key});
 
   @override
-  State<SignupScreen> createState() => _SignupScreenState();
+  ConsumerState<SignupScreen> createState() => _SignupScreenState();
 }
 
-class _SignupScreenState extends State<SignupScreen> {
+class _SignupScreenState extends ConsumerState<SignupScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
@@ -28,38 +30,32 @@ class _SignupScreenState extends State<SignupScreen> {
     super.dispose();
   }
 
-  Future<bool> _mockSignup(String name, String email, String password) async {
-    await Future.delayed(const Duration(seconds: 1));
-    // Accept if name not empty, email contains 'demo' or looks valid, password >= 8
-    return name.trim().isNotEmpty &&
-        _emailRegExp.hasMatch(email) &&
-        password.length >= 8;
-  }
-
   void _submit() async {
     final form = _formKey.currentState;
     if (form == null) return;
     if (!form.validate()) return;
 
     setState(() => _loading = true);
-    final success = await _mockSignup(
-      _nameCtrl.text.trim(),
-      _emailCtrl.text.trim(),
-      _passwordCtrl.text,
-    );
-    setState(() => _loading = false);
-
-    if (success) {
+    try {
+      await ref
+          .read(authNotifierProvider.notifier)
+          .signUp(
+            _emailCtrl.text.trim(),
+            _passwordCtrl.text,
+            _nameCtrl.text.trim(),
+          );
       if (mounted) {
         context.router.replaceAll([HomeRoute()]);
       }
-    } else {
+    } catch (e) {
+      // Handle error
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Signup failed (mock)')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Signup failed, please retry...')),
+        );
       }
     }
+    setState(() => _loading = false);
   }
 
   @override

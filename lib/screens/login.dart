@@ -1,17 +1,19 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_crash_course/components/button.dart';
+import 'package:flutter_crash_course/services/auth/auth_notifier.dart';
 import 'package:flutter_crash_course/services/router/router.gr.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 @RoutePage()
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
@@ -26,13 +28,6 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  Future<bool> _mockLogin(String email, String password) async {
-    // Mock network latency
-    await Future.delayed(const Duration(seconds: 1));
-    // Very simple mock: accept if email contains 'demo' and password length >=8
-    return email.contains('demo') && password.length >= 8;
-  }
-
   void _submit() async {
     final form = _formKey.currentState;
     if (form == null) return;
@@ -41,26 +36,23 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() {
       _loading = true;
     });
-    final success = await _mockLogin(
-      _emailCtrl.text.trim(),
-      _passwordCtrl.text,
-    );
-    setState(() {
-      _loading = false;
-    });
-
-    if (success) {
-      // For now just show a success snackbar
+    try {
+      await ref
+          .read(authNotifierProvider.notifier)
+          .login(_emailCtrl.text.trim(), _passwordCtrl.text);
       if (mounted) {
         context.router.replaceAll([HomeRoute()]);
       }
-    } else {
+    } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Invalid credentials (mock)')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Invalid credentials')));
       }
     }
+    setState(() {
+      _loading = false;
+    });
   }
 
   @override
