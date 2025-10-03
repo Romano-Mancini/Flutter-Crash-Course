@@ -1,6 +1,9 @@
+import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_crash_course/components/button.dart';
+import 'package:flutter_crash_course/services/router/router.gr.dart';
 
+@RoutePage()
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
 
@@ -48,9 +51,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
     if (success) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Signup successful (mock)')),
-        );
+        context.router.replaceAll([HomeRoute()]);
       }
     } else {
       if (mounted) {

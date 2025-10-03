@@ -1,8 +1,9 @@
+import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_crash_course/components/button.dart';
-import 'package:flutter_crash_course/screens/forgot_password.dart';
-import 'package:flutter_crash_course/screens/signup.dart';
+import 'package:flutter_crash_course/services/router/router.gr.dart';
 
+@RoutePage()
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -51,9 +52,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (success) {
       // For now just show a success snackbar
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Login successful (mock)')),
-        );
+        context.router.replaceAll([HomeRoute()]);
       }
     } else {
       if (mounted) {
@@ -154,11 +153,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         child: TextButton(
                           onPressed: () {
                             // navigate to forgot
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => const ForgotPasswordScreen(),
-                              ),
-                            );
+                            context.router.push(const ForgotPasswordRoute());
                           },
                           child: const Text('Forgot password?'),
                         ),
@@ -184,11 +179,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     TextButton(
                       onPressed: () {
                         // navigate to signup
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => const SignupScreen(),
-                          ),
-                        );
+                        context.router.push(const SignupRoute());
                       },
                       child: const Text('Sign up'),
                     ),
