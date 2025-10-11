@@ -12,17 +12,15 @@ class AddCountryScreen extends ConsumerStatefulWidget {
 }
 
 class _AddCountryScreenState extends ConsumerState<AddCountryScreen> {
-  bool _loading = false;
   @override
   Widget build(BuildContext context) {
     final countriesState = ref.watch(countriesNotifierProvider);
     return Scaffold(
       appBar: AppBar(title: const Text('Add Country')),
       body:
-          (_loading || countriesState.isLoading)
+          (countriesState.isLoading)
               ? const Center(child: CircularProgressIndicator())
               : Autocomplete<String>(
-                optionsMaxHeight: 800,
                 optionsBuilder: (TextEditingValue textEditingValue) {
                   if (textEditingValue.text.isEmpty) {
                     return const Iterable<String>.empty();
@@ -34,6 +32,95 @@ class _AddCountryScreenState extends ConsumerState<AddCountryScreen> {
                         ),
                       )
                       .toList();
+                },
+                fieldViewBuilder: (
+                  context,
+                  textEditingController,
+                  focusNode,
+                  onFieldSubmitted,
+                ) {
+                  return Container(
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 16.0,
+                      vertical: 8.0,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16.0),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 4.0,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: TextField(
+                      controller: textEditingController,
+                      focusNode: focusNode,
+                      onSubmitted: (String value) {
+                        onFieldSubmitted();
+                      },
+                      decoration: InputDecoration(
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16.0,
+                          vertical: 16.0,
+                        ),
+                        hintText: 'Enter country name',
+                        suffixIcon: IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            textEditingController.clear();
+                          },
+                        ),
+                      ),
+                    ),
+                  );
+                },
+                optionsViewBuilder: (context, onSelected, options) {
+                  return Align(
+                    alignment: Alignment.topLeft,
+                    child: Material(
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: 16.0,
+                          vertical: 16.0,
+                        ),
+                        width: MediaQuery.sizeOf(context).width,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16.0),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 4.0,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: ListView.builder(
+                          padding: EdgeInsets.zero,
+                          itemCount: options.length,
+                          itemBuilder: (BuildContext context, int index) {
+                            final option = options.elementAt(index);
+                            return ListTile(
+                              title: Text(
+                                option,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              onTap: () {
+                                onSelected(option);
+                              },
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  );
                 },
                 onSelected: (String selection) async {
                   await ref
