@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_crash_course/models/user.dart';
 import 'package:flutter_crash_course/services/auth/auth.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -10,6 +11,17 @@ class AuthNotifier extends _$AuthNotifier {
 
   @override
   UserModel build() {
+    FirebaseAuth.instance.userChanges().listen((User? user) {
+      if (user == null) {
+        state = UserModel();
+      } else {
+        state = UserModel(
+          uid: user.uid,
+          email: user.email ?? '',
+          name: user.displayName ?? '',
+        );
+      }
+    });
     return UserModel();
   }
 

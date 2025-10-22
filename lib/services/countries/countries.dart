@@ -1,12 +1,15 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_crash_course/models/countries_state.dart';
+import 'package:flutter_crash_course/services/auth/auth.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
 class CountriesService {
+  final _db = FirebaseFirestore.instance;
+
   Future<List<String>> fetchCountries() async {
-    // Simulate a network call
     final response = await http.get(
       Uri.parse('https://restcountries.com/v3.1/all?fields=name'),
     );
@@ -38,18 +41,30 @@ class CountriesService {
     );
   }
 
-  Future<void> saveCountries(List<Country> countries) async {
-    final prefs = await SharedPreferences.getInstance();
-    final countryList =
-        countries.map((country) => json.encode(country.toJson())).toList();
-    await prefs.setStringList('saved_countries', countryList);
+  Future<void> saveCountries(String uid, List<Country> countries) async {
+    try {
+      await _db.collection('users').doc(uid).set({
+        'saved_countries':
+            countries.map((country) => country.toJson()).toList(),
+      });
+    } catch (e) {
+      print('Error saving countries: $e');
+    }
   }
 
-  Future<List<Country>> loadSavedCountries() async {
-    final prefs = await SharedPreferences.getInstance();
-    final countryList = prefs.getStringList('saved_countries') ?? [];
-    return countryList
-        .map((countryStr) => Country.fromJson(json.decode(countryStr)))
-        .toList();
+  Future<List<Country>> loadSavedCountries(String uid) async {
+    try {
+      final doc = await _db.collection('users').doc(uid).get();
+      if (doc.exists) {
+        final data = doc.data();
+        final savedCountries = data?['saved_countries'] as List<dynamic>? ?? [];
+        return savedCountries
+            .map((countryJson) => Country.fromJson(countryJson))
+            .toList();
+      }
+    } catch (e) {
+      print('Error loading saved countries: $e');
+    }
+    return [];
   }
 }

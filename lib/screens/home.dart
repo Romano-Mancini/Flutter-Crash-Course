@@ -31,6 +31,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Your Countries')),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          context.pushRoute(const ProfileRoute());
+        },
+        shape: const CircleBorder(),
+        child: const Icon(Icons.person),
+      ),
       body: ListView.builder(
         itemCount: countriesState.savedCountries.length + 1,
         itemBuilder: (context, index) {

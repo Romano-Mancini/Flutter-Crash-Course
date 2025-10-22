@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "392829155775",
+    "project_id": "flutter-crash-course-test",
+    "storage_bucket": "flutter-crash-course-test.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:392829155775:android:0109a34734f4281de4090a",
+        "android_client_info": {
+          "package_name": "com.example.flutter_crash_course"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAgOEIzmi6utP2Q-MXSkc-clME70AeTflc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

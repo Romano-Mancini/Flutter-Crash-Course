@@ -1,58 +1,78 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_crash_course/models/user.dart';
 import 'package:flutter_crash_course/services/base_service.dart';
 
 class AuthService extends BaseService {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
   Future<UserModel> getCurrentUser() async {
-    final String? token = await tokenRepository.token;
-    if (token != null) {
-      final response = await client.get('${baseUrl}api/profile');
-      if (response.statusCode == 200) {
-        return UserModel.fromJson(response.data);
-      } else {
-        throw AuthException('Failed to fetch user data');
+    try {
+      User? user = _auth.currentUser;
+      if (user != null) {
+        return UserModel(
+          uid: user.uid,
+          email: user.email ?? '',
+          name: user.displayName ?? '',
+        );
       }
+    } catch (e) {
+      throw AuthException('Failed to fetch user data');
     }
-    throw AuthException('No user logged in');
+    return UserModel();
   }
 
   Future<UserModel> login(String email, String password) async {
-    final response = await client.post(
-      '${baseUrl}auth/login',
-      data: {'email': email, 'password': password},
-    );
-    if (response.statusCode == 200) {
-      await tokenRepository.setToken(response.data['access_token']);
-      await tokenRepository.setRefreshToken(response.data['refresh_token']);
-      return await getCurrentUser();
-    } else {
-      throw AuthException('Invalid credentials');
+    try {
+      final credential = await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      return UserModel(
+        uid: credential.user!.uid,
+        email: credential.user!.email ?? '',
+        name: credential.user!.displayName ?? '',
+      );
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'user-not-found') {
+        print('No user found for that email.');
+      } else if (e.code == 'wrong-password') {
+        print('Wrong password provided for that user.');
+      }
+      throw AuthException(e.message ?? 'Failed to login');
     }
   }
 
   Future<UserModel> signUp(String email, String password, String name) async {
-    final response = await client.post(
-      '${baseUrl}auth/signup',
-      data: {'email': email, 'password': password, 'name': name},
-    );
-    if (response.statusCode == 201) {
-      return await login(email, password);
-    } else {
+    try {
+      final credential = await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      await credential.user!.updateDisplayName(name);
+
+      return UserModel(
+        uid: credential.user!.uid,
+        email: credential.user!.email ?? '',
+        name: credential.user!.displayName ?? '',
+      );
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'weak-password') {
+        print('The password provided is too weak.');
+      } else if (e.code == 'email-already-in-use') {
+        print('The account already exists for that email.');
+      }
+      throw AuthException(e.message ?? 'Failed to sign up');
+    } catch (e) {
+      print(e);
       throw AuthException('Failed to sign up');
     }
   }
 
   Future<void> requestPasswordReset(String email) async {
-    final response = await client.post(
-      '${baseUrl}auth/forgot-password',
-      data: {'email': email},
-    );
-    if (response.statusCode != 200) {
-      throw AuthException('Failed to request password reset');
-    }
+    await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
   }
 
   Future<void> logout() async {
-    await tokenRepository.logout();
+    await FirebaseAuth.instance.signOut();
   }
 }
 
