@@ -1,10 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_crash_course/models/countries_state.dart';
-import 'package:flutter_crash_course/services/auth/auth.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-
-import 'package:shared_preferences/shared_preferences.dart';
 
 class CountriesService {
   final _db = FirebaseFirestore.instance;
